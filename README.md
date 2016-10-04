@@ -9,7 +9,7 @@ This tool require Apache or similar web server serves as backend engine.
 
 ### Screenshots
 
-![](https://github.com/tirthysw/light_anno/raw/master/docs/lightanno_t.jpg)
+![](https://github.com/tirthysw/light_anno/raw/master/docs/lightanno_.jpg)
  
 
 * * *
