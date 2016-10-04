@@ -1,0 +1,210 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Reload Annotation</title>
+
+<script src='utility.js'></script>
+<script src="lib/jquery-1.8.2.min.js"></script>
+<script src="lib/kinetic-v4.0.5.min.js"></script>
+
+<script type="text/javascript">
+	function lazyIniKinetic(){
+		
+		//main stage
+		containerName='stageContainer';
+ 
+		myglobal.stage = new Kinetic.Stage({
+          container: containerName,
+          width:myglobal.sw ,
+          height:myglobal.sh,
+		  scale:1
+        }); 
+		
+		$(myglobal.stage.getDOM()).attr('style','background-color:black;')
+		
+		//add all layer 
+		//*
+		for( var l in myglobal.allLayers){ 
+			myglobal.stage.add(myglobal.allLayers[l]);
+		}
+		 //*/
+		
+		//Image Layer 
+		myglobal.kwrapBkImage = new Kinetic.Image({
+          x: 0,
+          y: 0,
+          image: myglobal.bkImage,
+          width: myglobal.bkImage.width,
+          height: myglobal.bkImage.height,
+          name: "image"//,
+		  //draggable: true
+		 }); 
+		 
+		
+		//adding
+		
+		myglobal.imageLayer.add(myglobal.kwrapBkImage);
+		myglobal.imageLayer.draw();
+		//myglobal.imageLayer.setZIndex(1);
+		//myglobal.stage.draw();
+	}
+	function addShape(objlist,i)
+	{
+		var pBots=[];
+		var pTops=[];
+		
+		for( var ip = 0 ; ip < objlist[i].bottomFace.points.length ; ip ++){
+			pBots[ip] = {x:objlist[i].bottomFace.points[ip].x , y:objlist[i].bottomFace.points[ip].y};			
+		}
+		for( var ip = 0 ; ip < objlist[i].topFace.points.length ; ip ++){
+			pTops[ip] = {x:objlist[i].topFace.points[ip].x , y:objlist[i].topFace.points[ip].y};			
+		}
+		
+		var shape = new Kinetic.Shape({
+			drawFunc: function(context) {			
+					//draw top face
+					context.beginPath();
+					context.moveTo( pBots[0].x , pBots[0].y );
+					for( var iv =1 ; iv < pBots.length ; iv++ ){
+						context.lineTo( pBots[iv].x , pBots[iv].y );			 
+					} 
+					context.closePath(); 
+					this.stroke(context);
+						
+					//draw bottom face
+					context.beginPath();
+					context.moveTo( pTops[0].x , pTops[0].y );
+					for( var iv =1 ; iv < pTops.length ; iv++ ){
+						context.lineTo( pTops[iv].x , pTops[iv].y );			 
+					} 
+					context.closePath(); 
+					this.stroke(context);
+					
+					//draw vertical lines
+					context.beginPath();
+					for( var iv =0 ; iv < pTops.length ; iv++ ){
+						context.moveTo( pTops[iv].x , pTops[iv].y );
+						context.lineTo( pBots[iv].x , pBots[iv].y );			 
+					} 
+					context.closePath(); 
+					this.stroke(context);
+				},
+				name:'shape',
+				fill: 'rgba(200, 255, 200, 0)',
+				stroke: 'rgba(0,255,100,0.5)',
+				visible:true,
+				strokeWidth: 2
+		});
+		return shape;
+	}
+	function drawAnnotate()
+	{
+		var objlist = myglobal.annoation.proxies;
+		
+		for( var i=0 ; i < objlist.length ;i++){
+			
+			
+			if( objlist[i].annoClass == 'SpaceProxy' ){
+				var points=[];
+			
+				for( var ip = 0 ; ip < objlist[i].spaceCornerPoints.length ; ip ++){
+					points[ip] = {x:objlist[i].spaceCornerPoints[ip].x , y:objlist[i].spaceCornerPoints[ip].y};				
+				}
+				var shape = new Kinetic.Shape({
+					drawFunc: function(context) {				
+							context.beginPath();
+							for( var iv =1 ; iv < points.length ; iv++ ){
+								context.moveTo( points[0].x , points[0].y );
+								context.lineTo( points[iv].x , points[iv].y );			 
+							} 
+							context.closePath(); 
+							this.stroke(context);					 
+						},
+						name:'shape',
+						fill: 'red',
+						stroke: 'red',
+						visible:true,
+						strokeWidth: 2
+				});
+				
+				myglobal.annoLayer.add( shape );
+			
+			}else if( objlist[i].annoClass == 'BoxProxy' ){
+				
+				
+				myglobal.annoLayer.add( addShape(objlist,i) );
+			}else {
+				alert('unimplement annoClass ');
+			}			
+		
+			
+			
+		}//for
+		//myglobal.annoLayer.moveToTop();
+		myglobal.annoLayer.draw();
+	}
+	var myglobal=Object.create({});
+	myglobal.initialed=false;
+	 
+	//------------------------------------------------------
+	// kinetic objects 
+	myglobal.sw=1024;
+	myglobal.sh=800;
+	myglobal.bkLayer = new Kinetic.Layer();
+	//myglobal.annoLayer = new Kinetic.Layer();
+	myglobal.imageLayer = new Kinetic.Layer();
+	myglobal.annoLayer = myglobal.imageLayer;
+	myglobal.messageLayer = new Kinetic.Layer();
+	myglobal.allLayers = [ myglobal.imageLayer ];
+	myglobal.imgsrc = getURLParameter('img');
+	myglobal.kwrapBkImage =null;
+	myglobal.bkImage =checkImage(myglobal.imgsrc); 
+		
+	$(window).load(function(e) {
+
+		var serverURL = './readjson.php'; 
+		
+		$.post(serverURL, { img_src:myglobal.imgsrc }
+			,function(data){
+				myglobal.loaded = true;
+				myglobal.jsonstrs = data;
+				myglobal.annoation = $.parseJSON( data );
+
+				console.log(myglobal);
+
+				lazyIniKinetic();
+				
+				drawAnnotate();
+				
+				myglobal.initialed = true;
+				var dataurl = myglobal.imageLayer.getCanvas().toDataURL();
+				
+  
+				window.location = dataurl.replace(/image\/.*;/, 'image/octet-stream;');			
+				//window.location=dataurl;
+				//dataurl.replace(/image\/.*;/, 'image/octet-stream;');
+				//document.getElementById('aimg').src = dataurl;
+			}
+		).success(function() { 
+			//alert("second success"); 
+			//window.location='./results/';
+		}).error(function() { alert("Error: cannot fetch annotated data"); });
+		
+		
+	});	
+
+</script>
+</head>
+
+
+<body>
+
+</br>
+</br>
+</br>
+<div id='stageContainer' name='stageContainer' style="float:left;background-color:#CCC;"></div>
+<img id='aimg'>
+   
+</body>
+</html>

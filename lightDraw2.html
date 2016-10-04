@@ -1,0 +1,822 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Annotation</title>
+
+<script src="lib/jquery-1.8.2.min.js"></script>
+<!--script src="lib/kinetic-v4.0.5.min.js"></script-->
+<script src="lib/kinetic-v5.1.0.min.js"></script>
+<script src="lib/json2xml.js"></script>
+<script src="lib/xml2json.js"></script>
+<script src='utility.js'></script>
+<script src='statetools.js'></script>
+<script src='lib/jquery.blockUI.js'></script>
+<script type="text/javascript" src="lib/apprise-1.5.min.js"></script>
+<link rel="stylesheet" href="lib/apprise.min.css" type="text/css" />
+
+<script type="text/javascript">
+
+function writeHeadMesg(texts,append){
+	
+	if( append === undefined || !append  )
+		$('#headMsg').text(texts);		
+	else
+		$('#headMsg').text($('#headMsg').text()+'\n'+texts);	
+}
+
+function writeTexts(texts,append){
+	if( append === undefined || !append  )
+		$('#boxStateTextarea').text(texts);
+	else
+		$('#boxStateTextarea').text($('#boxStateTextarea').text()+'\n'+texts);	
+}
+ 
+function hideAllButtons(){
+	$('button').hide(); 
+}
+function showAllButtons(){
+	$('button').show(); 
+}
+
+
+</script>
+
+
+<script type="text/javascript">
+
+//return six points
+function getProxyXY(proxy)
+{
+
+
+}
+//return six points
+function getBoxSixXY(proxy)
+{
+	proxy.bottomFace;
+	proxy.topFace;
+		
+	var listA = [ proxy.topFace.points[1-1],
+				  proxy.bottomFace.points[1-1],
+				  proxy.bottomFace.points[2-1],
+				  proxy.bottomFace.points[3-1],
+				  proxy.topFace.points[3-1],
+				  proxy.topFace.points[4-1]
+				  ];	
+				 
+	console.log(listA);
+	
+	var listAFlat=[];
+	for( var i =0 ; i < listA.length ; i++){
+		listAFlat.push( listA[i].x );
+		listAFlat.push( listA[i].y ); 
+	}	
+	/* fail ?
+	var listB = [ proxy.topFace.points[2-1],
+				 proxy.bottomFace.points[2-1],
+				 proxy.bottomFace.points[3-1],
+				 proxy.bottomFace.points[3-1],
+				 proxy.topFace.points[4-1],	
+				 proxy.topFace.points[1-1]];
+	var listBFlat=[];
+	
+	for( var i =0 ; i < listA.length ; i++){
+		listBFlat.push( listB[i].x );
+		listBFlat.push( listB[i].y ); 
+	}	
+	 
+	console.log(listBFlat);
+	*/
+	return [listAFlat];
+}
+
+
+function sendSixFileData(sixFData, imgSrc)
+{
+
+	var serverURL='./sixserver.php';
+	var jsData = new Object();
+	jsData.sixFileData = sixFData.join('\n');
+	jsData.imgSrc = imgSrc;
+	
+	var strData =JSON.stringify(jsData); 
+	
+	$.post(serverURL, { json_string:strData }
+		,function(data){
+			console.log(data);	
+		}
+	).success(function() { 
+	}).error(function() { alert("error"); });//.complete(function() { alert("complete"); });
+	 
+}
+
+//dump all and simple case
+function sendFULLserlizedJSON(dump)
+{
+	//simple Dump 
+	var serverURL='./dumpserver.php';	
+	var allDump =JSON.stringify(dump);
+	$.post(serverURL, { json_string:allDump , is_all_dump:true }
+		,function(data){
+			console.log(data);	
+		}
+	).success(function() { 
+		//alert("second success"); 
+		
+		
+		//apprise("success"); 
+		markSuccessAnnotate( im_db_id , machine.bkImage.src,db_sid,db_num );
+		
+	}).error(function() { alert("error"); });//.complete(function() { alert("complete"); });
+	 
+}
+
+function markSuccessAnnotate(imid,imgsrc,start_id, num)
+{
+	
+	var serverURL='./markdone.php';	 
+	$.post(serverURL, { img_src:imgsrc , im_db_id:imid }
+		,function(data){
+			console.log(data);	
+		}
+	).success(function() { 
+		alert("second success");  
+		window.location='getimglist.php?start_id='+start_id+'&num='+num;
+		
+	}).error(function() { alert("error"); });//.complete(function() { alert("complete"); });
+}
+
+function showCurrentanchorXY(){
+	
+		var s = this.kinStage.getScale();
+		writeTexts('--bot---stamp:'+Math.random()%100+'\n');
+		if( this.currentProxyIdx!== -1 &&
+				this.boxProxyList[this.currentProxyIdx] != undefined &&
+				this.boxProxyList[this.currentProxyIdx].annoClass =='BoxProxy'){
+			for( var i in this.boxProxyList[this.currentProxyIdx].bottomFace.points ){
+				
+				var x = this.boxProxyList[this.currentProxyIdx].bottomFace.points[i].bindingarchor.getAbsolutePosition().x 
+						- this.kwrapBkImage.getAbsolutePosition().x;
+					x = Math.round(x/s.x);
+				var y = this.boxProxyList[this.currentProxyIdx].bottomFace.points[i].bindingarchor.getAbsolutePosition().y
+								- this.kwrapBkImage.getAbsolutePosition().y;
+					y = Math.round(y/s.y);
+
+				writeTexts('x='+ x + '\t y='+ y +'\n' ,true);
+			}
+			
+			writeTexts('--top--\n',true);
+			
+			if(this.boxProxyList[this.currentProxyIdx].topFace){
+			
+				for( var i in this.boxProxyList[this.currentProxyIdx].topFace.points ){ 
+					var x = this.boxProxyList[this.currentProxyIdx].topFace.points[i].bindingarchor.getAbsolutePosition().x 
+						- this.kwrapBkImage.getAbsolutePosition().x;
+						x = Math.round(x/s.x);
+					var y = this.boxProxyList[this.currentProxyIdx].topFace.points[i].bindingarchor.getAbsolutePosition().y
+								- this.kwrapBkImage.getAbsolutePosition().y;
+						y = Math.round(y/s.y)
+
+						writeTexts('x='+ x + '\t y='+ y +'\n' ,true);								 
+								
+				}
+			}
+		
+		}
+}
+
+function realSave(sMachine){
+//guards
+		var hasBoxProxy=false;
+		var hasSpaceProxy=false;
+		
+		for( var i in sMachine.boxProxyList ){
+		
+			if( sMachine.boxProxyList[i].annoClass == 'PolyProxy' ){				
+				
+			}else if(sMachine.boxProxyList[i].annoClass == 'BoxProxy'){	
+				hasBoxProxy=true;				
+			}else if(sMachine.boxProxyList[i].annoClass == 'SpaceProxy'){
+				
+				hasSpaceProxy=true;
+			}
+			
+		}
+		
+		if( !hasBoxProxy ){
+			alert('NO BOX PROXY FOUND!! : action cancle');
+			return this.currentState;			
+		}
+		
+		if( !hasSpaceProxy ){
+			alert('NO SPACE PROXY FOUND!! : action cancle');
+			return this.currentState;			
+		}
+		
+		//------------------------------------------------------------
+		//apprise(text)
+		
+		var sixFileLines=[];
+		var imsx = sMachine.kwrapBkImage.getAbsolutePosition().x;
+		var imsy = sMachine.kwrapBkImage.getAbsolutePosition().y;
+		var sx = sMachine.kinStage.getScale().x;
+		var sy = sMachine.kinStage.getScale().y; 
+		
+		// general .six file and .sixFULL file
+		for( var i in sMachine.boxProxyList ){
+			
+			if( sMachine.boxProxyList[i].annoClass == 'PolyProxy' ){
+			
+				for( var ip=0 ; ip < sMachine.boxProxyList[i].polypoints.length ; ip++ ){
+					sMachine.boxProxyList[i].polypoints[ip].x = 
+						Math.round((sMachine.boxProxyList[i].polypoints[ip].bindingarchor.getAbsolutePosition().x - imsx )/sx);
+					sMachine.boxProxyList[i].polypoints[ip].y = 
+						Math.round((sMachine.boxProxyList[i].polypoints[ip].bindingarchor.getAbsolutePosition().y - imsy )/sy);
+				}
+				
+			}else if(sMachine.boxProxyList[i].annoClass == 'BoxProxy'){		
+				
+				//get absolute position
+				var botPts=sMachine.boxProxyList[i].bottomFace.points;
+				var topPts=sMachine.boxProxyList[i].topFace.points;
+				
+				for( var ip=0 ; ip < botPts.length ; ip++ ){
+					botPts[ip].x = Math.round((botPts[ip].bindingarchor.getAbsolutePosition().x - imsx )/sx);
+					botPts[ip].y = Math.round((botPts[ip].bindingarchor.getAbsolutePosition().y - imsy )/sy);
+				}
+				for( var ip=0 ; ip < topPts.length ; ip++ ){	
+					topPts[ip].x = Math.round((topPts[ip].bindingarchor.getAbsolutePosition().x - imsx )/sx);
+					topPts[ip].y = Math.round((topPts[ip].bindingarchor.getAbsolutePosition().y - imsy )/sy);
+				}
+				
+				//--------------------------------------------------
+				var lineData = getBoxSixXY(sMachine.boxProxyList[i]);
+				
+				for(var id=0; id<lineData.length ; id++){
+					console.log(lineData[id].join(' ') + ' # BoxProxy ' +sMachine.boxProxyList[i].tagName );
+					sixFileLines.push(lineData[id].join(' '));					
+				}
+				
+			}else if(sMachine.boxProxyList[i].annoClass == 'SpaceProxy'){
+			
+				sMachine.boxProxyList[i].spaceCornerPoints; 
+			
+				for( var ip=0 ; ip < sMachine.boxProxyList[i].spaceCornerPoints.length ; ip++ ){
+					sMachine.boxProxyList[i].spaceCornerPoints[ip].x = 
+						Math.round(( sMachine.boxProxyList[i].spaceCornerPoints[ip].bindingarchor.getAbsolutePosition().x - imsx )/sx);
+					sMachine.boxProxyList[i].spaceCornerPoints[ip].y = 
+						Math.round(( sMachine.boxProxyList[i].spaceCornerPoints[ip].bindingarchor.getAbsolutePosition().y - imsy )/sy);
+				}
+				
+			}else{
+				alert('unknown type - E_save');
+				return this.currentState;
+			}
+			
+			
+		}
+
+		sendSixFileData(sixFileLines,sMachine.bkImage.src);
+
+		
+		//removing circular
+		var cloneList =sMachine.boxProxyList.slice(0);
+		for(var i in cloneList){
+			delete cloneList[i].anchor;
+			delete cloneList[i].machine;
+			delete cloneList[i].objLayer;
+			delete cloneList[i].shape;
+			delete cloneList[i].group;
+		}
+		var dumpData = new Object();
+		dumpData.imgSrc = sMachine.bkImage.src;
+		dumpData.proxies=cloneList;
+		sendFULLserlizedJSON(dumpData);
+
+}
+
+function bindMachineEvnets(sMachine){
+
+
+	$('#zoominBut').click( function(e){ sMachine.handleEvent({type:'E_zoom_in'});   });
+	$('#zoomoutBut').click( function(e){ sMachine.handleEvent({type:'E_zoom_out'});   });
+	$('#addSpaceBut').click( function(e){ sMachine.handleEvent({type:'E_add_space_corner'});   });
+	$('#deleteBoxBut').click( function(e){ sMachine.handleEvent({type:'E_delete_proxy'});   });
+	$('#addBoxBut').click( function(e){ sMachine.handleEvent({type:'E_add_new_box'});   });
+	$('#actDoneBut').click( function(e){ sMachine.handleEvent({type:'E_action_done'});  });
+	$('#saveCurrentBut').click( function(e){ sMachine.handleEvent({type:'E_save'});  });
+	//$('#toggleShowCurShapeBut').click( function(e){ sMachine.handleEvent({type:'E_toggle_show_cur_shape'});  });
+	//$('#toggleShowOtherProxyBut').click( function(e){ sMachine.handleEvent({type:'E_toggle_show_other_proxy'});  });
+	
+	$('#hideAllother').click( function(e){   
+        if( $("#hideAllother").attr("checked") != undefined ){   
+           hideAllproxy(sMachine.boxProxyList, sMachine , {skipCurrent:true});
+        }else{   
+           showAllProxy(sMachine.boxProxyList, sMachine , {skipCurrent:true});
+        }   
+	   sMachine.kinStage.draw();
+    });
+
+	//set up data member
+	sMachine.bkImage=bkImage;
+	sMachine.boxProxyList=[];
+	sMachine.kinStage=stage;
+	sMachine.annoLayer=annoLayer;
+	sMachine.messageLayer=messageLayer;
+	sMachine.currentProxyIdx=-1;
+	sMachine.kwrapBkImage=kwrapBkImage;
+	//------------------------------------------------------------------------------
+	//SETUP STATE - Initial
+	//------------------------------------------------------------------------------
+	//set up Zoom in/out
+	sMachine.actionTransitionFunctions.Initial.E_zoom_in = function(e){
+		var s=this.kinStage.getScale();
+		this.kinStage.setScale(1.1*s.x ,1.1*s.y) ;
+		this.kinStage.draw();
+		return this.currentState;
+	}
+	sMachine.actionTransitionFunctions.Initial.E_zoom_out = function(e){
+		var s=this.kinStage.getScale();
+		if(s.x >0.2 && s.y >0.2)
+			this.kinStage.setScale(0.9*s.x ,0.9*s.y) ;
+		
+		this.kinStage.draw();
+		return this.currentState;
+	}
+	
+	sMachine.actionTransitionFunctions.Initial.E_save = function(e){
+		$.blockUI();
+		realSave(sMachine)
+		$.unblockUI();
+		return this.currentState;
+	}
+	//------------------------------------------------------------------------------
+	//set up INITIAL State -> Delete_proxy state 	
+	//signal: E_delete_proxy button
+	sMachine.actionTransitionFunctions.Initial.E_delete_proxy = function(e){
+		
+		hideAllButtons();
+		$('#actDoneBut').text('Done');
+		writeHeadMesg('Click on proxy to delete it!');
+			
+		$('#actDoneBut').show();
+		//first turn off all event and set group to be the handler 
+		for( var i in this.boxProxyList ){
+			turnOffAllMouseEvent(this.boxProxyList[i].group);
+			
+			this.boxProxyList[i].group.on('mouseover',function(e){
+				var shapes = this.get('.shape');
+				for( var is=0 ; is < shapes.length ;is++){
+					shapes[is].setFill("red");
+					shapes[is].getStage().draw();
+				}
+			});
+			this.boxProxyList[i].group.on('mouseout',function(e){
+				var shapes = this.get('.shape');
+				for( var is=0 ; is < shapes.length ;is++){
+					//shapes[is].attrs.fill="#rgba(0,0,255,0.9)";
+					shapes[is].setFill("rgba(255, 255, 255, 0)");
+					//shapes[is].attrs.stroke="blue";
+					shapes[is].getLayer().draw();
+					//shapes[is].getStage().draw();
+				}
+			});
+			this.boxProxyList[i].group.on( 'click',function(e){
+				
+				sMachine.tempGroup=this;
+				
+				apprise('Sure?', {'verify':true} ,function(r){
+				
+					if(r){
+					//yes do delete
+						var index=-1;
+						for( var i =0 ; i <  sMachine.boxProxyList.length ; i++){
+							if(sMachine.tempGroup ===  sMachine.boxProxyList[i].group ){
+								index=i;
+								break;
+							}
+						}
+						
+						if(index==-1){
+							alert('internal error:index==-1');
+							return;
+						}else{
+							console.log(index);
+									
+							//remove this group in kinetic layer				 
+							sMachine.tempGroup.remove();//(sMachine.boxProxyList[0].group);
+							sMachine.tempGroup=undefined;
+							
+							//remove this obj in our context
+							sMachine.boxProxyList.splice(index,1);
+							 
+							sMachine.kinStage.draw();
+						}
+					
+					}
+				
+				
+				}); 
+				
+						 
+				 
+			});//outter
+			
+		}
+		return 'DeleteProxy';
+	}
+	//------------------------------------------------------------------------------
+	
+	
+	//set up INITIAL State -> AddNewBox state 
+	// Signel : E_add_new_box
+	sMachine.actionTransitionFunctions.Initial.E_add_new_box = function(e){
+		
+		hideAllButtons();
+		$('#actDoneBut').show();
+		writeHeadMesg('Please adjust the "Top" face of new box proxy.');
+		
+		this.boxProxyList.push( addNewBoxProxy(sMachine,this.kinStage ,this.annoLayer) );
+		this.currentProxyIdx = this.boxProxyList.length-1; 
+		return 'AddTopFace';
+	}
+	
+	sMachine.actionTransitionFunctions.Initial.E_add_space_corner = function(e){
+		
+		hideAllButtons();
+		$('#actDoneBut').show();
+		$('#tag').hide();
+		$('select#tag').val('');
+		writeHeadMesg('Fit the coner of space box');
+		
+		this.boxProxyList.push( createNewSpaceCorner(sMachine,this.kinStage ,this.annoLayer) );
+		this.annoLayer.draw();
+		this.currentProxyIdx = this.boxProxyList.length-1; 
+		return 'AdjustSpaceCorner';
+	}
+	
+	//====================================================================================
+	 
+	//------------------------------------------------------------------------------
+	//SETUP STATE - AddPolygon
+	//------------------------------------------------------------------------------
+	// set AddPolygon State -> to AdjustPolygon
+	// Signel : E_action_done (implict fire by click ) 
+	sMachine.actionTransitionFunctions.AddPolygon.E_action_done = function(e){
+	
+		//we got three points 
+		//go into adjust state
+		// show action done button for adjusting action
+		$('#actDoneBut').show();
+		$('#tag').show();
+		writeHeadMesg('Adjust Prolygon to fit floor  !');
+		return 'AdjustPolygon';
+	}
+	
+	//------------------------------------------------------------------------------
+	//SETUP STATE - AdjustPolygon
+	//------------------------------------------------------------------------------
+	// set ADDBOTTOMFACE State -> to AddTopFace
+	// Signel : E_action_done 
+	sMachine.actionTransitionFunctions.AdjustPolygon.E_action_done = function(e){
+		 
+		if( $('select#tag').val() != '' ){
+		//select tags
+			
+			//action done is pressed
+			//freeze polygon
+			lockSpaceCornerProxy(this.boxProxyList[this.currentProxyIdx]);
+			this.boxProxyList[this.currentProxyIdx].tagName = $('select#tag').val();
+			showAllButtons();
+			$('#actDoneBut').hide();
+			$('#tag').hide();
+			 
+			$('select#tag').val('');
+			return 'Initial';
+		
+		}else{
+		// bad
+			apprise('Plase Choose the Category of Object!!');
+			return this.currentState; 
+		}
+		
+	}
+	
+	//------------------------------------------------------------------------------
+	//SETUP STATE - AddTopFace
+	//------------------------------------------------------------------------------
+	// set ADDBOTTOMFACE State -> to AddTopFace
+	// Signel : E_action_done
+	sMachine.actionTransitionFunctions.AddTopFace.E_action_done = function(e){
+		
+		hideAllButtons();
+		
+		$('#tag').show();
+		$('#actDoneBut').show();
+		$('#actDoneBut').text('ACTION DONE');
+		writeHeadMesg('Please adjust the "BOTTOM" face of new box proxy.');
+		
+		var colors = ['rgb(150,0,0)' , 'rgb(150,150,0)' , 'rgb(0,100,0)' , 'rgb(0,0,150)' ]; 
+		
+		//disable top face 
+		for( var i in this.boxProxyList[this.currentProxyIdx].topFace.points ){
+			
+			//this.boxProxyList[this.currentProxyIdx].topFace.points[i].bindingarchor.attrs.visible =true; 
+			this.boxProxyList[this.currentProxyIdx].topFace.points[i].bindingarchor.visible =true; 
+			
+			//this.boxProxyList[this.currentProxyIdx].topFace.points[i].bindingarchor.setDraggable(true); 
+			this.boxProxyList[this.currentProxyIdx].topFace.points[i].bindingarchor.draggable(true);
+			
+			this.boxProxyList[this.currentProxyIdx].topFace.points[i].bindingarchor.attrs.fill = colors[i]; 
+			this.boxProxyList[this.currentProxyIdx].topFace.points[i].bindingarchor.attrs.stroke = 'rgba(0,255,0,0.7)'; 
+			this.boxProxyList[this.currentProxyIdx].topFace.points[i].bindingarchor.moveToTop(); 
+			
+			writeTexts('x='+Math.round(this.boxProxyList[this.currentProxyIdx].topFace.points[i].x) 
+						 + '\t y='+Math.round(this.boxProxyList[this.currentProxyIdx].topFace.points[i].y)+'\n' ,true);
+		}
+		
+		this.boxProxyList[this.currentProxyIdx].topFace.shape.attrs.fill='rgba(150,150,150,0.7)';
+		this.boxProxyList[this.currentProxyIdx].topFace.shape.attrs.stroke='rgba(0,255,100,0.5)'; 
+		
+		//this.boxProxyList[this.currentProxyIdx].topFace.shape.setDraggable(false) ;  
+		//this.boxProxyList[this.currentProxyIdx].group.setDraggable(false) ;
+		this.boxProxyList[this.currentProxyIdx].topFace.shape.draggable(false);  
+		this.boxProxyList[this.currentProxyIdx].group.draggable(false);
+
+		//enable bottom face		
+		//this.boxProxyList[this.currentProxyIdx].bottomFace.shape.moveToTop();
+		for( var i in this.boxProxyList[this.currentProxyIdx].bottomFace.points )
+		{
+			this.boxProxyList[this.currentProxyIdx].bottomFace.points[i].bindingarchor.x(
+				this.boxProxyList[this.currentProxyIdx].topFace.points[i].bindingarchor.x() );
+			
+			this.boxProxyList[this.currentProxyIdx].bottomFace.points[i].bindingarchor.x(
+				this.boxProxyList[this.currentProxyIdx].topFace.points[i].bindingarchor.x() );
+			
+			this.boxProxyList[this.currentProxyIdx].bottomFace.points[i].bindingarchor.y(
+				this.boxProxyList[this.currentProxyIdx].topFace.points[i].bindingarchor.y()+50 );
+			
+			this.boxProxyList[this.currentProxyIdx].bottomFace.points[i].bindingarchor.y(
+				this.boxProxyList[this.currentProxyIdx].topFace.points[i].bindingarchor.y()+50 );
+			
+			//this.boxProxyList[this.currentProxyIdx].bottomFace.points[i].bindingarchor.attrs.visible=true ;
+			this.boxProxyList[this.currentProxyIdx].bottomFace.points[i].bindingarchor.visible(true);
+			
+			//this.boxProxyList[this.currentProxyIdx].bottomFace.points[i].bindingarchor.setDraggable(true) ;
+			this.boxProxyList[this.currentProxyIdx].bottomFace.points[i].bindingarchor.draggable(true);
+			this.boxProxyList[this.currentProxyIdx].bottomFace.points[i].bindingarchor.moveToTop();
+			
+			writeTexts('x='+Math.round(this.boxProxyList[this.currentProxyIdx].bottomFace.points[i].x) 
+						 + '\t y='+Math.round(this.boxProxyList[this.currentProxyIdx].bottomFace.points[i].y)+'\n' ,true);
+		}
+		
+		//this.boxProxyList[this.currentProxyIdx].bottomFace.shape.attrs.visible=true;
+		this.boxProxyList[this.currentProxyIdx].bottomFace.shape.visible(true);
+		
+		this.kinStage.draw();
+		return 'AddBottomFace';
+	}
+
+	
+	//------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------
+	//SETUP STATE - AddBottomFace
+	//------------------------------------------------------------------------------
+	sMachine.actionTransitionFunctions.AddBottomFace.E_action_done = function(e){
+	
+		if( $('select#tag').val() != '' ){			
+			
+			this.boxProxyList[this.currentProxyIdx].tagName = $('select#tag').val();
+			
+			lockBoxProxy(this.boxProxyList[this.currentProxyIdx]);
+			showAllButtons();
+			writeHeadMesg('');
+			$('#actDoneBut').hide();
+			$('#tag').hide();
+			$('select#tag').val('');
+			writeHeadMesg('Done  !');
+			return 'Initial';
+		}else{
+			apprise('Plase Choose the Category of Object!!');
+			return this.currentState; 
+		}
+	}
+	//------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------
+	//SETUP STATE - AddTag
+	//------------------------------------------------------------------------------
+	
+	
+	//------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------
+	//SETUP STATE - ReAdjust
+	//------------------------------------------------------------------------------
+	
+	
+	//------------------------------------------------------------------------------
+
+	//------------------------------------------------------------------------------
+	//SETUP STATE - 
+	//------------------------------------------------------------------------------
+	//set up INITIAL State -> Delete_proxy state 	
+	sMachine.actionTransitionFunctions.DeleteProxy.E_action_done = function(e){
+
+		$('#actDoneBut').text('Action Done');
+		
+		//remove click 'self kill' action
+		for( var i in this.boxProxyList ){
+			turnOffAllMouseEvent(this.boxProxyList[i].group);
+		}
+		
+		showAllButtons(); 
+		$('#tag').hide();
+		$('#actDoneBut').hide();
+		writeHeadMesg('');
+		
+		return 'Initial';
+	}
+	
+	
+	//------------------------------------------------------------------------------
+ 
+	
+	//------------------------------------------------------------------------------
+	//SETUP STATE - Adjust Space Corner
+	//------------------------------------------------------------------------------
+	// set ADDBOTTOMFACE State -> to 
+	// Signel : E_action_done 
+	sMachine.actionTransitionFunctions.AdjustSpaceCorner.E_action_done = function(e){
+		
+		//action done is pressed
+		//freeze polygon
+		lockSpaceCornerProxy(this.boxProxyList[this.currentProxyIdx]);
+		this.boxProxyList[this.currentProxyIdx].tagName = 'space_corner';
+		showAllButtons();
+		$('#actDoneBut').hide();
+		return 'Initial';
+		
+				
+	}
+	
+}
+
+</script>
+<script type="text/javascript">
+	
+	// construct stage
+	var machine = new StateMachine({});
+
+	//------------------------------------------------------
+	// kinetic objects
+	var stage;
+	var sw=1024;
+	var sh=1024;
+	var bkLayer = new Kinetic.Layer();
+	var annoLayer = new Kinetic.Layer();
+	var imageLayer = new Kinetic.Layer();
+	var messageLayer = new Kinetic.Layer();
+	var allLayers = [ bkLayer,imageLayer,annoLayer,messageLayer];
+	
+	
+	//check 
+	var im_db_id = getURLParameter('imid');
+	var db_sid =  getURLParameter('dbsid');
+	var db_num =  getURLParameter('dbnum');
+	
+	if(im_db_id === "null" ){
+		alert('invalid GET-imid window.stop');
+		window.stop();
+	}
+	
+	var imgsrc = getURLParameter('img');
+	var bkImage =checkImage(imgsrc);
+	
+	//my objects
+	var enableRigid=true;
+	var colorPurple = "#cb3594";
+	var colorGreen = "#659b41";
+	//bkImage.src= "Images/folder1/img_1040.jpg";
+	
+	
+	var kwrapBkImage =null;
+	
+	function lazyIniKinetic(){
+		
+		//main stage
+		containerName='stageContainer';
+ 
+		stage = new Kinetic.Stage({
+          container: containerName,
+          width:sw ,
+          height:sh,
+		  scale:1
+        }); 
+		
+		
+		//$(stage.getDOM()).attr('style','background-color:black;')
+		
+		//add all layer 
+		for( var l in allLayers){
+			stage.add(allLayers[l]);
+		}
+		 
+		
+		//Image Layer 
+		kwrapBkImage = new Kinetic.Image({
+          x: 0,
+          y: 0,
+          image: bkImage,
+          width: bkImage.width,
+          height: bkImage.height,
+          name: "image"//,
+		  //draggable: true
+		 }); 
+		
+		//binding
+	
+		kwrapBkImage.on("mousemove",function(){
+ 			writeMessage(messageLayer,
+						 bkImage.width+','+bkImage.height+' :'+this.getPosition().x + ' , '+ 
+				this.getPosition().y);
+		});
+		kwrapBkImage.on("click",function(){
+			if(this.currentProxyIdx!=-1)
+				showCurrentanchorXY.apply(machine);
+		});
+		
+		//adding
+		
+		imageLayer.add(kwrapBkImage);
+		imageLayer.setZIndex(1);
+		
+	}
+	
+	//------------------------------------------------------
+		
+	
+</script>
+
+<script type="text/javascript">
+
+	$(window).load(function(e) {
+		lazyIniKinetic();
+		
+		bindMachineEvnets(machine);
+		 
+		//draw call
+		stage.draw();
+	});
+</script>
+</head>
+
+
+<body>
+<div>
+<p id='headMsg' style="font-size:26px">Indoor Annotator</p> 
+<button id='zoominBut' >Zoom in</button>
+<button id='zoomoutBut'  >Zoom out</button>|||
+<button id='addBoxBut'  >Add Box Proxy</button> 
+<!-- button id='addPolygonBut' >Add Polygon Proxy</button-->
+<button id='addSpaceBut'  >Add Space Proxy</button> 
+<button id='deleteBoxBut'  >Delete Proxy Mode</button>  
+<button id='saveCurrentBut'  >Save</button> 
+<button id='actDoneBut' style='font-size:24px;display:none; font-weight:bold'>ACTION DONE</button>
+</br></br>|||
+
+<!--button id='toggleShowCurShapeBut' >Hide ALL</button-->  
+<!--button id='toggleShowOtherProxyBut'  >Hide Other Proxy</button-->  
+
+<input type="checkbox" id='hideAllother'  />Hide Not Focused Proxy<br> 
+
+<div id='tag' style='display:none'> Object Tag: 
+<select id='tag' name="tag"  >
+  <option value="">Choose a Category</option>
+  <option value="Table">Table</option>
+  <option value="Sofa">Sofa</option> 
+  <option value="Chair">Chair</option>
+  <option value="Wardrobe">Wardrobe</option>
+  <option value="Bed">Bed</option>
+  <option value="cabinet">cabinet</option>
+  
+  <!--option value="Ceiling">Ceiling</option>
+  <option value="Walls">Walls</option>
+  <option value="Floor">Floor</option-->
+</select>
+</div>
+</div>
+
+</br>
+</br>
+</br>
+<div id='stageContainer' name='stageContainer' style="float:left;background-color:#CCC;"></div>
+<div style="float:right;background-color:#CCC; display:none;">
+<p  align="center" style="font-size:25px">Notices</p>
+<textarea id='boxStateTextarea' rows=60 cols=50>it works</textarea>
+</div>
+
+</br>
+</br>
+</br> 
+</body>
+</html>
