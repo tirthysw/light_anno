@@ -2,6 +2,7 @@
 
 This tool allows users to give annotation on images and export as JSON files.
 
+
 ### Requirement
 
 This tool require Apache or similar web server serves as backend engine.
@@ -64,3 +65,21 @@ This tool require Apache or similar web server serves as backend engine.
 The <font style="color:red;">Red</font> dots should always be placed on left side.  
 
 ![](https://github.com/tirthysw/light_anno/raw/master/docs/test_p.JPG)
+
+
+
+### For Further Developments 
+
+There are three major script files:
+
+Main Entry and logic control:[lightDraw2.html](https://github.com/tirthysw/light_anno/blob/master/lightDraw2.html)
+
+JS State Machine:[statetools.js](https://github.com/tirthysw/light_anno/blob/master/statetools.js)
+
+WebGL Warpper:[utility.js](https://github.com/tirthysw/light_anno/blob/master/utility.js)
+
+
+
+
+
+
