@@ -9,8 +9,10 @@ This tool require Apache or similar web server serves as backend engine.
 
 ### Screenshots
 
-* * *
+![](https://github.com/tirthysw/light_anno/raw/master/docs/lightanno_t.jpg)
+ 
 
+* * *
 ### Quick Start
 
 1. setup apache servers 
@@ -37,7 +39,7 @@ This tool require Apache or similar web server serves as backend engine.
 
 ![](https://github.com/tirthysw/light_anno/raw/master/docs/bot.JPG)
 
-6.  Select an tag.
+6.  Select a tag.
 7.  Press "Action Done" Button to lock proxy.
 
 #### How to Add Space Corner?
