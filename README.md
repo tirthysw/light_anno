@@ -7,9 +7,9 @@ This tool allows users to give annotation on images and export as JSON files.
 
 This tool require Apache or similar web server serves as backend engine.
 
-### Screenshots
+### Result Screenshots
 
-![](https://github.com/tirthysw/light_anno/raw/master/docs/lightanno3.jpg)
+![](https://github.com/tirthysw/light_anno/raw/master/docs/lightanno4.jpg)
 
 ### Quick Start
 
