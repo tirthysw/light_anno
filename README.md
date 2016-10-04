@@ -29,11 +29,12 @@ This tool require Apache or similar web server serves as backend engine.
 
 1.  Press "Add Box Proxy" Button.
 2.  Adjust the Top face of Box.
-![](top.jpg)
+
+![](https://github.com/tirthysw/light_anno/raw/master/docs/top.JPG)
 
 4.  Press "Action Done Button " and Adjust the Bottom face of Box.
 
-![](bot.jpg)
+![](https://github.com/tirthysw/light_anno/raw/master/docs/bot.JPG)
 
 6.  Select an tag.
 7.  Press "Action Done" Button to lock proxy.
@@ -44,7 +45,7 @@ This tool require Apache or similar web server serves as backend engine.
 2.  Adjust four dots to fit walls and floor.
 3.  Press "Action Done" Button to lock proxy.
 
-![](space.jpg)
+![](https://github.com/tirthysw/light_anno/raw/master/docs/space.JPG)
 
 #### How to delete proxy?
 
@@ -56,12 +57,10 @@ This tool require Apache or similar web server serves as backend engine.
 
 1.  Press "Save Button" to save and leave.
 
-* * *
 
-## Notices
-
-*   #### Keep Box Orientation Consistent
+### Notices
+#### Keep Box Orientation Consistent
 
 The <font style="color:red;">Red</font> dots should always be placed on left side.  
 
-![](test_p.JPG)
+![](https://github.com/tirthysw/light_anno/raw/master/docs/test_p.JPG)
