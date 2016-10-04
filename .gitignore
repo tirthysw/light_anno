@@ -25,7 +25,9 @@ Thumbs.db
 [Dd]ebug*/
 *.lib
 *.sbr
-lib/*
+lib/old/*
+lib/*.js
+lib/*.css
 obj/
 [Rr]elease*/
 _ReSharper*/
