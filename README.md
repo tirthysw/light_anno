@@ -12,7 +12,6 @@ This tool require Apache or similar web server serves as backend engine.
 ![](https://github.com/tirthysw/light_anno/raw/master/docs/lightanno2.jpg)
  
 
-* * *
 ### Quick Start
 
 1. setup apache servers 
