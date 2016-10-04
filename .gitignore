@@ -30,7 +30,6 @@ obj/
 [Rr]elease*/
 _ReSharper*/
 [Tt]est[Rr]esult*
-*.png 
 sql/*.sqlite3
 calibrated/*.json 
 calibrated/*
