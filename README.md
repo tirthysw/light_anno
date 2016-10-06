@@ -13,7 +13,7 @@ This tool require Apache or similar web server serves as backend engine.
 
 ### Quick Start
 
-1. setup apache servers 
+1. setup apache server 
 
 2. open the tool via access this url:
     
@@ -23,7 +23,7 @@ This tool require Apache or similar web server serves as backend engine.
     use GET token to specify the path of an image ("img=Images/02_2.jpg")
 
 
-* please notices that one of the library, KineticJS, stops supporting anymore.([see issue](https://github.com/ericdrowell/KineticJS/issues/1048))
+* please notices that one of the library, KineticJS, stops supporting anymore.([see this issue](https://github.com/ericdrowell/KineticJS/issues/1048))
   we directly upgraded to latest version, but it might contains some errors.
 
 #### How to Add Box Proxy?
